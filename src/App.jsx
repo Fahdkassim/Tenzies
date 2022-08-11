@@ -3,14 +3,15 @@ import Die from "./components/Die";
 import { nanoid } from "nanoid";
 import { useEffect } from "react";
 import Confetti from "react-confetti";
-// import useWindowSize from "@react-hook/window-size"
 
 export default function App() {
   //setting dice random dice state
+
   const [dice, setDice] = React.useState(allNewDice());
-
   const [tenzies, setTenzies] = React.useState(false);
-
+  const [time, setTime] = React.useState(0);
+  const [timerOn, setTimerOn] = React.useState();
+  
   useEffect(() => {
     const allHeld = dice.every((die) => die.isHeld);
     const firstValue = dice[0].value;
@@ -18,6 +19,7 @@ export default function App() {
 
     if (allHeld && allSame) {
       setTenzies(true);
+      setTimerOn(false)
     }
   }, [dice]);
 
@@ -28,7 +30,10 @@ export default function App() {
         value={die.value}
         isHeld={die.isHeld}
         key={die.id}
-        hold={() => holdDice(die.id)}
+        hold={() => {
+          holdDice(die.id)
+          setTimerOn(true)
+        }}
       />
     );
   });
@@ -56,7 +61,9 @@ export default function App() {
     return randomArray;
   }
   //roll button function
+
   function roll() {
+    startTimer()
     return setDice((prevdice) =>
       prevdice.map((die) => {
         return die.isHeld
@@ -71,21 +78,50 @@ export default function App() {
   }
 
   function reset() {
+    stopTimer()
     setDice(allNewDice());
     setTenzies(false);
   }
+  // timer code
+  function startTimer() {
+    setTimerOn(true);
+  }
+  function stopTimer() {
+    setTimerOn(false);
+    setTime(0)
+  }
 
-  // const { width, height } = useWindowSize();
- 
+  useEffect(() => {
+   
+    let interval = null;
+    if (timerOn===true) {
+      interval = setInterval(() => {
+        setTime(time + 1);
+      }, 1000);
+    } else{
+      clearInterval(interval);
+      
+    }
+    return () => {
+      clearInterval(interval);
+    };
+  },[time, timerOn]);
+
+  
+
   return (
     <main className="main-container">
-      {tenzies && <Confetti width={1300}/>}
+      {tenzies && <Confetti width={1300} />}
       <h1 className="title">Tenzies</h1>
       <p className="instructions">
         Roll until all dice are the same. <br />
         Click each die to freeze it at its current value between rolls.
       </p>
       <div className="dice-container">{diElements}</div>
+      <p className="seconds">
+        Time lapsed is <strong>{time}</strong> seconds
+      </p>
+
       <button className="roll-btn" onClick={tenzies ? reset : roll}>
         {tenzies ? "New Game" : "Roll"}
       </button>
